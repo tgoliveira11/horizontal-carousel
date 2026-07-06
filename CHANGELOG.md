@@ -9,6 +9,8 @@ Conventions for contributors and agents: [docs/contributing.md](./docs/contribut
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-07-06
+
 ### Added
 
 - `examples/consumer-demo/` — local Vite app (not published) with link cards, drag
