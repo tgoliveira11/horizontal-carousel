@@ -2,3 +2,5 @@ node_modules
 dist
 .cache
 coverage
+examples/**/node_modules
+examples/**/dist

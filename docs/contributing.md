@@ -4,6 +4,7 @@
 
 Before starting work, also check:
 
+- [AGENTS.md](../AGENTS.md) — agent checklist (changelog is mandatory)
 - [docs/publishing.md](./publishing.md) — npm release process (manual only)
 - [CHANGELOG.md](../CHANGELOG.md) — user-facing change log
 
@@ -31,6 +32,7 @@ Before opening a pull request (or when the user asks you to prepare one):
 1. `npm run validate` — typecheck, lint, tests (≥90% coverage), build.
 2. Update [`CHANGELOG.md`](../CHANGELOG.md) under `## [Unreleased]` for
    user-visible changes (see [Changelog conventions](#changelog-conventions)).
+   **Required on every task that changes behavior or docs — not only at PR time.**
 3. Update [`README.md`](../README.md) when the public API or integration
    requirements change.
 4. Confirm no secrets, credentials, or `.env` files are staged.
