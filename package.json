@@ -1,0 +1,81 @@
+{
+  "name": "@tgoliveira/horizontal-carousel",
+  "version": "0.1.0",
+  "description": "Accessible horizontal carousel with arrows, drag, and dwell-to-grab UX",
+  "keywords": [
+    "react",
+    "carousel",
+    "horizontal-carousel",
+    "slider"
+  ],
+  "license": "MIT",
+  "author": "Engineering",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tgoliveira11/horizontal-carousel.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tgoliveira11/horizontal-carousel/issues"
+  },
+  "homepage": "https://github.com/tgoliveira11/horizontal-carousel#readme",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "validate": "npm run typecheck && npm run lint && npm run test:coverage && npm run build",
+    "audit:security": "npm audit --omit=dev --audit-level=high",
+    "audit:security:all": "npm audit",
+    "prepare:release": "node scripts/prepare-release.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": false
+    },
+    "react-dom": {
+      "optional": false
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.9",
+    "jsdom": "^29.1.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "tsup": "^8.5.0",
+    "typescript": "^5",
+    "vitest": "^4.1.9"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

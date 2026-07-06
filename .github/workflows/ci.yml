@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  branch-name:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require feature/, fix/, docs/, or chore/ branch prefix
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          if [[ ! "$BRANCH" =~ ^(feature|fix|docs|chore)/ ]]; then
+            echo "::error::Branch '${BRANCH}' must start with feature/, fix/, docs/, or chore/ (see docs/contributing.md)."
+            exit 1
+          fi
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Validate (typecheck, lint, tests + coverage ≥90%, build)
+        run: npm run validate
+      - name: Verify package contents
+        run: npm pack --dry-run --ignore-scripts
