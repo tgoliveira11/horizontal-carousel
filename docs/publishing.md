@@ -41,11 +41,63 @@ anywhere**.
    - **Repository:** `tgoliveira11/horizontal-carousel`
    - **Workflow filename:** `publish.yml`
    - **Environment:** `npmjs`
-3. For the very first publish of a brand-new package name, npm may require you
-   to create the package once before trusted publishing can take over.
+3. For the very first publish of a brand-new package name, npm requires you
+   to create the package once before trusted publishing can take over (see
+   [Bootstrap first publish](#bootstrap-first-publish)).
 
 `package.json` already sets `publishConfig.access = "public"` and
 `publishConfig.provenance = true`.
+
+### Bootstrap first publish
+
+Trusted Publisher only applies to **GitHub Actions** (OIDC). The one-time local
+bootstrap must **disable provenance** — otherwise npm fails with:
+
+```
+Automatic provenance generation not supported for provider: null
+```
+
+From the repo root (with `npm login` active). Build first, then publish
+immediately with a **fresh** OTP — pass `--otp` on the `publish` command itself
+(not only via `NPM_CONFIG_OTP`):
+
+```bash
+npm run build
+npm publish --access public --provenance=false --ignore-scripts --otp=123456
+```
+
+Replace `123456` with the current code from your authenticator (codes expire in
+~30 seconds). Do not wait between the two commands.
+
+If publish still fails after several OTP attempts, npm may **rate-limit OTP**
+(`429 Too Many Requests - rate limited otp`). Wait 15–30 minutes before trying
+again.
+
+### Granular token (recommended if OTP keeps failing)
+
+Create a one-time **Granular Access Token** on npmjs.com:
+
+1. Profile → **Access Tokens** → **Generate New Token** → **Granular Access Token**
+2. Permissions: **Read and write** for scope `@tgoliveira` (or this package)
+3. Enable **Bypass 2FA**
+4. Export and publish:
+
+```bash
+npm run build
+NPM_TOKEN=npm_xxx npm publish --access public --provenance=false --ignore-scripts
+```
+
+(with `//registry.npmjs.org/:_authToken=${NPM_TOKEN}` in the environment or
+`~/.npmrc` for that command)
+
+Delete or revoke the token after bootstrap; use **Trusted Publisher** + the
+GitHub workflow for subsequent releases.
+
+After this succeeds:
+
+1. Configure **Trusted Publisher** on the package (settings above).
+2. Use the **Publish package to npmjs** workflow for all subsequent releases —
+   those publishes include provenance via OIDC.
 
 ## How to cut a release
 

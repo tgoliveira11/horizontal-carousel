@@ -1,0 +1,24 @@
+---
+description: Changelog and pre-PR guardrails for horizontal-carousel
+alwaysApply: true
+---
+
+# Changelog and PR workflow
+
+Read [AGENTS.md](../../AGENTS.md) and [docs/contributing.md](../../docs/contributing.md) before changing this repo.
+
+## Changelog (mandatory)
+
+Update [CHANGELOG.md](../../CHANGELOG.md) under `## [Unreleased]` for every
+user-visible change (features, fixes, API, integration docs) **in the same task** —
+do not wait for the user to remind you. Mirrors outpost `AGENTS.md` / pre-PR checklist.
+
+## Pre-PR
+
+- Run `npm run validate` when preparing a PR.
+- Update README when public API or integration requirements change.
+- Never stage secrets or `.env` files.
+
+## Publishing
+
+Never run the publish workflow or `npm publish` unless the user explicitly requests it.

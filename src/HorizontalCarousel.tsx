@@ -90,6 +90,20 @@ export function HorizontalCarousel<T>({
   const canGoLeft = activeOffset > 0;
   const canGoRight = activeOffset < maxOffset;
 
+  const canGoLeftRef = useRef(canGoLeft);
+  const canGoRightRef = useRef(canGoRight);
+  canGoLeftRef.current = canGoLeft;
+  canGoRightRef.current = canGoRight;
+
+  const windowSessionCleanupRef = useRef<(() => void) | null>(null);
+
+  const endWindowPointerSession = useCallback(() => {
+    if (windowSessionCleanupRef.current) {
+      windowSessionCleanupRef.current();
+      windowSessionCleanupRef.current = null;
+    }
+  }, []);
+
   const clearDwell = useCallback(() => {
     if (dwellTimerRef.current != null) {
       clearTimeout(dwellTimerRef.current);
@@ -131,8 +145,9 @@ export function HorizontalCarousel<T>({
       if (dwellTimerRef.current != null) {
         clearTimeout(dwellTimerRef.current);
       }
+      endWindowPointerSession();
     };
-  }, []);
+  }, [endWindowPointerSession]);
 
   const updateDwellFromPointer = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!canScroll || draggingRef.current || pointerStartX.current != null) return;
@@ -174,57 +189,72 @@ export function HorizontalCarousel<T>({
     startDwellTimer(slideKey);
   };
 
-  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+  const onPointerDownCapture = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
+    if (!canScroll) return;
     if (isCarouselInteractiveTarget(event.target)) return;
 
+    endWindowPointerSession();
     clearDwell();
-    pointerStartX.current = event.clientX;
+
+    const startX = event.clientX;
+    const pointerId = event.pointerId;
+    pointerStartX.current = startX;
     draggingRef.current = false;
     setIsDragging(false);
     setDragPx(0);
+
+    const onWindowPointerMove = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== pointerId) return;
+
+      const delta = moveEvent.clientX - startX;
+      if (
+        !draggingRef.current &&
+        carouselDragStarted(delta, CAROUSEL_DRAG_START_THRESHOLD_PX)
+      ) {
+        draggingRef.current = true;
+        setIsDragging(true);
+        clearDwell();
+        moveEvent.preventDefault();
+      }
+      if (draggingRef.current) {
+        moveEvent.preventDefault();
+        setDragPx(delta);
+      }
+    };
+
+    const onWindowPointerEnd = (endEvent: PointerEvent) => {
+      if (endEvent.pointerId !== pointerId) return;
+
+      endWindowPointerSession();
+
+      if (pointerStartX.current == null) return;
+      const delta = endEvent.clientX - startX;
+
+      if (draggingRef.current) {
+        const step = carouselDragStep(delta, CAROUSEL_SNAP_THRESHOLD_PX);
+        if (step === 1 && canGoRightRef.current) goRight();
+        if (step === -1 && canGoLeftRef.current) goLeft();
+        suppressNextClickRef.current = true;
+      }
+
+      resetDrag();
+    };
+
+    const cleanup = () => {
+      window.removeEventListener("pointermove", onWindowPointerMove);
+      window.removeEventListener("pointerup", onWindowPointerEnd);
+      window.removeEventListener("pointercancel", onWindowPointerEnd);
+    };
+
+    windowSessionCleanupRef.current = cleanup;
+    window.addEventListener("pointermove", onWindowPointerMove);
+    window.addEventListener("pointerup", onWindowPointerEnd);
+    window.addEventListener("pointercancel", onWindowPointerEnd);
   };
 
   const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     updateDwellFromPointer(event);
-
-    if (pointerStartX.current == null) return;
-    const delta = event.clientX - pointerStartX.current;
-    if (
-      !draggingRef.current &&
-      carouselDragStarted(delta, CAROUSEL_DRAG_START_THRESHOLD_PX)
-    ) {
-      draggingRef.current = true;
-      setIsDragging(true);
-      clearDwell();
-      try {
-        event.currentTarget.setPointerCapture(event.pointerId);
-      } catch {
-        /* ignore */
-      }
-    }
-    if (draggingRef.current) {
-      setDragPx(delta);
-    }
-  };
-
-  const onPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (pointerStartX.current == null) return;
-    const delta = event.clientX - pointerStartX.current;
-
-    if (draggingRef.current) {
-      const step = carouselDragStep(delta, CAROUSEL_SNAP_THRESHOLD_PX);
-      if (step === 1 && canGoRight) goRight();
-      if (step === -1 && canGoLeft) goLeft();
-      suppressNextClickRef.current = true;
-    }
-
-    resetDrag();
-    try {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    } catch {
-      /* capture may already be released */
-    }
   };
 
   const onPointerLeave = () => {
@@ -251,13 +281,15 @@ export function HorizontalCarousel<T>({
 
   const trackClassName = [
     "flex touch-pan-x",
-    canScroll && !isDragging
-      ? "cursor-pointer [&_[data-carousel-interactive]]:cursor-pointer [&_[data-carousel-grab-armed]>_*]:cursor-grab"
-      : "",
-    isDragging ? "touch-none select-none cursor-grabbing" : "",
+    isDragging ? "touch-none select-none cursor-grabbing [&_*]:cursor-grabbing" : "",
   ]
     .filter(Boolean)
     .join(" ");
+
+  const slideSurfaceClass =
+    canScroll && !isDragging
+      ? "cursor-grab [&_*]:cursor-grab [&_[data-carousel-interactive]]:cursor-pointer"
+      : "";
 
   return (
     <div className={`relative overflow-visible ${className ?? ""}`}>
@@ -268,18 +300,18 @@ export function HorizontalCarousel<T>({
         <CarouselArrow direction="right" onClick={goRight} label={nextArrowLabel} />
       ) : null}
 
-      <div className="overflow-hidden">
+      <div className="overflow-hidden" style={{ overflow: "hidden" }}>
         <div
           className={trackClassName}
           style={{
+            display: "flex",
             transform,
             transition: isDragging ? "none" : "transform 200ms ease-out",
           }}
-          onPointerDown={onPointerDown}
+          onPointerDownCapture={onPointerDownCapture}
           onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
           onPointerLeave={onPointerLeave}
+          onDragStartCapture={(event) => event.preventDefault()}
           onClickCapture={onClickCapture}
         >
           {items.map((item, index) => {
@@ -290,8 +322,8 @@ export function HorizontalCarousel<T>({
                 key={slideKey}
                 {...{ [CAROUSEL_ATTR_SLIDE]: slideKey }}
                 {...(isArmed ? { [CAROUSEL_ATTR_GRAB_ARMED]: "" } : {})}
-                className={`shrink-0 ${slideClassName ?? ""}`}
-                style={{ width: `${slidePercent}%` }}
+                className={`shrink-0 ${slideSurfaceClass} ${slideClassName ?? ""}`}
+                style={{ flexShrink: 0, width: `${slidePercent}%` }}
               >
                 {renderSlide(item, index)}
               </div>

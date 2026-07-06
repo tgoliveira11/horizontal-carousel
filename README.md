@@ -12,7 +12,16 @@ npm install @tgoliveira/horizontal-carousel
 
 Peer dependencies: `react` and `react-dom` (v18+).
 
-This component uses [Tailwind CSS](https://tailwindcss.com/) utility classes. Your app must include Tailwind (or equivalent) so the default styles apply.
+This component uses [Tailwind CSS](https://tailwindcss.com/) utility classes. Your app must include Tailwind and scan the package source (or `dist`) so those classes are generated:
+
+```css
+@import "tailwindcss";
+@source "../node_modules/@tgoliveira/horizontal-carousel/dist";
+```
+
+When linking the library from a monorepo path, point `@source` at the package `src/` or `dist/` folder instead.
+
+Critical layout styles (`overflow`, `flex`, slide width) are also set inline so the carousel remains functional even if a few utility classes are missing.
 
 ## Usage
 
@@ -94,6 +103,16 @@ npm run validate   # typecheck, lint, tests + coverage, build
 npm test
 npm run build
 ```
+
+### Consumer demo
+
+Local Vite app under `examples/consumer-demo/` (not published with the package):
+
+```bash
+npm run demo:dev
+```
+
+See [examples/consumer-demo/README.md](examples/consumer-demo/README.md).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for branch, PR, and release workflow.
 
