@@ -1,6 +1,6 @@
 {
   "name": "@tgoliveira/horizontal-carousel",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Accessible horizontal carousel with arrows, drag, and dwell-to-grab UX",
   "keywords": [
     "react",
